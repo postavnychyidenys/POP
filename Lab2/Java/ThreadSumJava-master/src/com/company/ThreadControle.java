@@ -2,7 +2,7 @@ package com.company;
 
 import java.util.Random;
 
-public class ControleThread {
+public class ThreadControle {
 
   private int stopThreadsCount = 0;
   private final int threadsCount = 8;

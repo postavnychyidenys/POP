@@ -2,7 +2,7 @@ package com.company;
 
 class ComputeThread extends Thread{
 
-  private final ControleThread controleThread;
+  private final ThreadControle threadControle;
   private final int[] array;
   private final int threadIndex;
   private final int threadsCount;
@@ -11,11 +11,11 @@ class ComputeThread extends Thread{
   private int minElement;
 
 
-  public ComputeThread(int[] array, int threadIndex, int threadsCount, ControleThread controleThread) {
+  public ComputeThread(int[] array, int threadIndex, int threadsCount, ThreadControle threadControle) {
     this.array = array;
     this.threadIndex = threadIndex;
     this.threadsCount = threadsCount;
-    this.controleThread = controleThread;
+    this.threadControle = threadControle;
   }
 
   @Override
@@ -30,7 +30,7 @@ class ComputeThread extends Thread{
         minIndex = i;
       }
     }
-    controleThread.incrementStopThreadsCount(threadIndex);
+    threadControle.incrementStopThreadsCount(threadIndex);
   }
 
   public int getMinIndex() {

@@ -3,6 +3,7 @@ package com.company;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicInteger;
 
 class Storage{
   public int size;
@@ -11,8 +12,8 @@ class Storage{
   public Semaphore full;
   public List<String> items;
   public volatile int itemsTarget;
-  public volatile int itemsProduced;
-  public volatile int itemsReceived;
+  public AtomicInteger itemsProduced;
+  public AtomicInteger itemsReceived;
 
   private int lastIndex = 0;
 
@@ -22,8 +23,8 @@ class Storage{
     this.empty = new Semaphore(0);
     this.full = new Semaphore(size);
     this.itemsTarget = itemsTarget;
-    this.itemsProduced = 0;
-    this.itemsReceived = 0;
+    this.itemsProduced = new AtomicInteger(itemsTarget);
+    this.itemsReceived = new AtomicInteger(itemsTarget);
     items = new ArrayList<>();
   }
 

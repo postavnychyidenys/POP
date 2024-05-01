@@ -12,13 +12,21 @@ class Producer extends Thread{
 
     @Override
     public void run() {
-        while (storage.itemsProduced.getAndDecrement() > 0){
+        while (storage.itemsProduced < storage.itemsTarget){
             try {
                 storage.full.acquire();
                 storage.access.acquire();
 
+                if (storage.itemsProduced >= storage.itemsTarget){
+                    storage.full.release();
+                    storage.access.release();
+                    storage.empty.release();
+                    return;
+                }
+
                 int itemIndex = storage.put();
                 System.out.println("Producer " + index + " added " + itemIndex);
+                storage.itemsProduced++;
 
                 storage.access.release();
                 storage.empty.release();

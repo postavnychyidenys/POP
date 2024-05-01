@@ -12,13 +12,20 @@ class Consumer extends Thread{
 
     @Override
     public void run() {
-        while (storage.itemsReceived.getAndDecrement() > 0){
+        while (storage.itemsReceived < storage.itemsTarget){
             try {
                 storage.empty.acquire();
                 storage.access.acquire();
 
+                if (storage.itemsReceived >= storage.itemsTarget){
+                    storage.empty.release();
+                    storage.full.release();
+                    storage.access.release();
+                    return;
+                }
                 String item = storage.items.remove(0);
                 System.out.println("Consumer " + index + " took " + (item));
+                storage.itemsReceived++;
 
                 storage.access.release();
                 storage.full.release();
@@ -30,4 +37,3 @@ class Consumer extends Thread{
 
     }
 }
-

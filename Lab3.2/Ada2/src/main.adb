@@ -4,67 +4,83 @@ with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 use Ada.Containers;
 with GNAT.Threads;
 
-
 procedure Main is
 
    package String_Lists is new Indefinite_Doubly_Linked_Lists (String);
    use String_Lists;
+   
+   protected ItemsHandler is
+      procedure SetProduction (Total : in Integer);
+      procedure GetProduction (Result : out Boolean);
+      procedure GetConsumption (Result : out Boolean);
+      procedure DecrementProduced;
+      procedure DecrementConsumed;
+   private
+      Remains_to_Produce : Integer := 0;
+      Remains_to_Consume : Integer := 0;
+   end ItemsHandler;
 
-   procedure Init (ItemsTarget : in Integer; StorageSize : in Integer;
+   protected body ItemsHandler is
+      procedure SetProduction (Total : in Integer) is
+      begin
+         Remains_to_Produce := Total;
+         Remains_to_Consume := Total;
+      end SetProduction;
+
+      procedure GetProduction (Result : out Boolean) is
+      begin
+         Result := Remains_to_Produce = 0;
+      end GetProduction;
+
+      procedure GetConsumption (Result : out Boolean) is
+      begin
+          Result := Remains_to_Consume = 0;
+      end GetConsumption;
+
+      procedure DecrementProduced is
+      begin
+         if Remains_to_Produce > 0 then
+            Remains_to_Produce := Remains_to_Produce - 1;
+         end if;
+      end DecrementProduced;
+
+      procedure DecrementConsumed is
+      begin
+         if Remains_to_Consume > 0 then
+            Remains_to_Consume := Remains_to_Consume - 1;
+         end if;
+      end DecrementConsumed;
+
+   end ItemsHandler;
+
+   procedure Init (StorageSize : in Integer;
                    ProducersCount : in Integer; ConsumersCount : in Integer) is
       Storage : List;
       Access_Storage : Counting_Semaphore (1, Default_Ceiling);
       Full_Storage   : Counting_Semaphore (StorageSize, Default_Ceiling);
       Empty_Storage  : Counting_Semaphore (0, Default_Ceiling);
-      ItemsProduced : Integer := ItemsTarget;
-      ItemsReceived : Integer := ItemsTarget;
-
-      procedure GetItemsProduced(Result : out Boolean) is
-      begin
-         Result := ItemsProduced = 0;
-      end GetItemsProduced;
-
-      procedure GetItemsReceived(Result : out Boolean) is
-      begin
-         Result := ItemsReceived = 0;
-      end GetItemsReceived;
-
-      procedure DecrementProduced is
-      begin
-         if ItemsProduced > 0 then
-            ItemsProduced := ItemsProduced - 1;
-         end if;
-      end DecrementProduced;
-
-      procedure DecrementReceived is
-      begin
-         if ItemsReceived > 0 then
-            ItemsReceived := ItemsReceived - 1;
-         end if;
-      end DecrementReceived;
-
-
-      function IsProductionDone return Boolean is
-      begin
+      
+   function IsProductionDone return Boolean is
+   begin
       declare
          Result : Boolean := False;
       begin
-         GetItemsProduced(Result);
-         DecrementProduced;
+         ItemsHandler.GetProduction(Result);
+         ItemsHandler.DecrementProduced;
          return Result;
       end;
-      end IsProductionDone;
+   end IsProductionDone;
 
-       function IsReceivedDone return Boolean is
-       begin
-       declare
+   function IsConsumptionDone return Boolean is
+   begin
+      declare
          Result : Boolean := False;
-       begin
-         GetItemsReceived(Result);
-         DecrementReceived;
+      begin
+         ItemsHandler.GetConsumption(Result);
+         ItemsHandler.DecrementConsumed;
          return Result;
-       end;
-       end IsReceivedDone;
+      end;
+   end IsConsumptionDone;
 
       task type ProducerTask;
       task body ProducerTask is
@@ -90,7 +106,7 @@ procedure Main is
       begin
 
 
-         while not IsReceivedDone loop
+         while not IsConsumptionDone loop
 
             Empty_Storage.Seize;
             Access_Storage.Seize;
@@ -112,5 +128,6 @@ procedure Main is
    end Init;
 
 begin
-   Init(10, 3, 6, 4);
+   ItemsHandler.SetProduction(10);
+   Init(3, 6, 4);
 end Main;
